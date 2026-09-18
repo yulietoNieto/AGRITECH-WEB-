@@ -135,6 +135,7 @@ async function bootApp() {
 
   setupNav();
   await loadDashboard();
+  loadWeatherData();
   startPolling();
 }
 
@@ -167,6 +168,8 @@ function navigateTo(page) {
   
   const titles = { dashboard: 'Dashboard', monitoring: 'Monitoreo', reports: 'Reportes' };
   $('topbar-title').textContent = titles[page] || page;
+
+  if (page === 'dashboard') { loadWeatherData(); }
 
   if (page === 'monitoring') { loadSensors(); loadHistory(); }
   if (page === 'reports')    { loadReportsList(); }
@@ -386,6 +389,7 @@ function initCharts(sensors) {
 }
 
 /* ── Polling ─────────────────────────────────────────────── */
+let weatherPollCount = 0;
 function startPolling() {
   pollInterval = setInterval(async () => {
     try {
@@ -394,6 +398,13 @@ function startPolling() {
       allSensors = sensors;
       updateChartsRealtime(sensors);
       updateKPIsRealtime(sensors);
+
+      // Recargar clima cada 15 minutos (180 ciclos de 5s)
+      weatherPollCount++;
+      if (weatherPollCount >= 180) {
+        weatherPollCount = 0;
+        loadWeatherData();
+      }
     } catch (_) {}
   }, 5000);
 }
@@ -647,6 +658,114 @@ function appendMessage(sender, text) {
   chatMsgs.appendChild(div);
   chatMsgs.scrollTop = chatMsgs.scrollHeight;
   return id;
+}
+
+/* ── Weather Widget ──────────────────────────────────────── */
+async function loadWeatherData(forceRefresh = false) {
+  const refreshBtn = document.querySelector('.btn-refresh-weather');
+  if (refreshBtn) refreshBtn.classList.add('spinning');
+
+  try {
+    const endpoint = forceRefresh ? '/weather?refresh=true' : '/weather';
+    const data = await api('GET', endpoint);
+    renderWeatherWidget(data);
+  } catch (e) {
+    console.error('Weather error', e);
+    const loc = $('weather-location');
+    if (loc) loc.textContent = 'Error al cargar datos meteorológicos';
+  } finally {
+    if (refreshBtn) {
+      setTimeout(() => refreshBtn.classList.remove('spinning'), 500);
+    }
+  }
+}
+
+function renderWeatherWidget(data) {
+  if (!data || !data.current) return;
+
+  const c = data.current;
+  const loc = data.location;
+
+  // Location
+  const locEl = $('weather-location');
+  if (locEl) locEl.textContent = `📍 ${loc.name}, ${loc.municipality}, ${loc.department} — ${loc.altitude} msnm`;
+
+  // Weather icon
+  const iconEl = $('weather-icon-big');
+  if (iconEl) iconEl.innerHTML = `<i class="${escapeHtml(c.weather_icon)}"></i>`;
+
+  // Temperature
+  const tempEl = $('weather-temp');
+  if (tempEl) tempEl.textContent = `${c.temperature}°C`;
+
+  // Description
+  const descEl = $('weather-desc');
+  if (descEl) descEl.textContent = c.weather_description;
+
+  // Feels like
+  const feelsEl = $('weather-feels');
+  if (feelsEl) feelsEl.textContent = `Sensación: ${c.feels_like}°C`;
+
+  // Metrics
+  const hmEl = $('wm-humidity');
+  if (hmEl) hmEl.textContent = `${c.humidity}%`;
+
+  const windEl = $('wm-wind');
+  if (windEl) windEl.textContent = `${c.wind_speed} km/h`;
+
+  const precipEl = $('wm-precip');
+  if (precipEl) precipEl.textContent = `${c.precipitation} mm`;
+
+  const pressEl = $('wm-pressure');
+  if (pressEl) pressEl.textContent = `${c.pressure ? Math.round(c.pressure) : '--'} hPa`;
+
+  // Alerts
+  renderWeatherAlerts(data.alerts || []);
+
+  // Forecast
+  renderForecast(data.forecast || []);
+}
+
+function renderWeatherAlerts(alerts) {
+  const container = $('weather-alerts');
+  if (!container) return;
+
+  if (!alerts.length) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = alerts.map((alert, i) => `
+    <div class="alert-banner ${escapeHtml(alert.severity)}" style="animation-delay: ${i * 0.1}s">
+      <i class="${escapeHtml(alert.icon)}"></i>
+      <div class="alert-content">
+        <div class="alert-title">${escapeHtml(alert.title)}</div>
+        <div class="alert-message">${escapeHtml(alert.message)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderForecast(forecast) {
+  const grid = $('forecast-grid');
+  if (!grid || !forecast.length) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  grid.innerHTML = forecast.map(day => {
+    const isToday = day.date === today;
+    return `
+      <div class="forecast-card ${isToday ? 'today' : ''}">
+        <div class="forecast-day">${escapeHtml(day.day_name)}</div>
+        <div class="forecast-icon"><i class="${escapeHtml(day.icon)}"></i></div>
+        <div class="forecast-temps">
+          <span class="forecast-temp-max">${day.temp_max}°</span>
+          <span class="forecast-temp-min">${day.temp_min}°</span>
+        </div>
+        <div class="forecast-precip"><i class="fas fa-tint"></i> ${day.precip_probability}%</div>
+      </div>
+    `;
+  }).join('');
 }
 
 function removeMessage(id) {

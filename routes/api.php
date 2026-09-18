@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SensorController;
+use App\Http\Controllers\WeatherController;
 use Illuminate\Support\Facades\Route;
 
 // Public auth routes
@@ -20,6 +21,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Dashboard
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/sensors/realtime',  [DashboardController::class, 'realtime']);
+
+    // Weather — Datos meteorológicos reales vía Open-Meteo API
+    Route::get('/weather', [WeatherController::class, 'getWeather']);
 
     // Sensors
     Route::get('/sensors',         [SensorController::class, 'index']);

@@ -117,6 +117,98 @@
         <div class="kpi-card skeleton"></div>
       </div>
 
+      <!-- WEATHER WIDGET — Datos reales vía Open-Meteo API -->
+      <div class="weather-widget" id="weather-widget">
+        <div class="weather-header">
+          <div class="weather-title-row">
+            <div>
+              <h3><i class="fas fa-cloud-sun-rain"></i> Clima en Tiempo Real</h3>
+              <p class="weather-location" id="weather-location">Cargando datos meteorológicos…</p>
+            </div>
+            <div class="weather-badges">
+              <span class="data-badge real"><i class="fas fa-satellite-dish"></i> Datos Reales vía API</span>
+              <button class="btn-refresh-weather" onclick="loadWeatherData(true)" title="Actualizar datos meteorológicos">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Weather Main -->
+        <div class="weather-current" id="weather-current">
+          <div class="weather-main-card">
+            <div class="weather-icon-big" id="weather-icon-big">
+              <i class="fas fa-cloud-sun"></i>
+            </div>
+            <div class="weather-temp-group">
+              <div class="weather-temp" id="weather-temp">--°C</div>
+              <div class="weather-desc" id="weather-desc">Cargando…</div>
+              <div class="weather-feels" id="weather-feels">Sensación: --°C</div>
+            </div>
+          </div>
+
+          <div class="weather-metrics-grid">
+            <div class="weather-metric">
+              <i class="fas fa-tint"></i>
+              <div>
+                <span class="metric-value" id="wm-humidity">--%</span>
+                <span class="metric-label">Humedad</span>
+              </div>
+            </div>
+            <div class="weather-metric">
+              <i class="fas fa-wind"></i>
+              <div>
+                <span class="metric-value" id="wm-wind">-- km/h</span>
+                <span class="metric-label">Viento</span>
+              </div>
+            </div>
+            <div class="weather-metric">
+              <i class="fas fa-cloud-rain"></i>
+              <div>
+                <span class="metric-value" id="wm-precip">-- mm</span>
+                <span class="metric-label">Precipitación</span>
+              </div>
+            </div>
+            <div class="weather-metric">
+              <i class="fas fa-tachometer-alt"></i>
+              <div>
+                <span class="metric-value" id="wm-pressure">-- hPa</span>
+                <span class="metric-label">Presión</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agricultural Alerts -->
+        <div class="weather-alerts" id="weather-alerts"></div>
+
+        <!-- 7-Day Forecast -->
+        <div class="weather-forecast-section">
+          <h4><i class="fas fa-calendar-week"></i> Pronóstico 7 Días</h4>
+          <div class="forecast-grid" id="forecast-grid">
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+            <div class="forecast-card skeleton" style="height:140px"></div>
+          </div>
+        </div>
+
+        <!-- Data Source Limitation Note -->
+        <div class="weather-data-note">
+          <div class="data-note-row">
+            <span class="data-badge real"><i class="fas fa-check-circle"></i> Real</span>
+            <span>Temperatura y humedad ambiental — datos reales obtenidos vía API meteorológica (Open-Meteo, modelos ECMWF/GFS).</span>
+          </div>
+          <div class="data-note-row">
+            <span class="data-badge simulated"><i class="fas fa-flask"></i> Simulado</span>
+            <span>Humedad del suelo y nutrientes NPK — simulados con modelos estadísticos para cultivo de papa. <strong>Limitación:</strong> requieren sensores físicos enterrados.</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Charts row 1: Humidity + Status donut -->
       <div class="charts-row">
         <div class="chart-card">

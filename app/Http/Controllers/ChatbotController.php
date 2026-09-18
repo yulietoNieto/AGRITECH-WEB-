@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\WeatherService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,6 +12,7 @@ class ChatbotController extends Controller
     /**
      * Maneja las consultas al chatbot usando la API de Gemini.
      * Contexto personalizado con la descripción oficial del usuario.
+     * Incluye datos meteorológicos REALES de Carmen de Carupa vía Open-Meteo API.
      */
     public function ask(Request $request)
     {
@@ -28,10 +30,19 @@ class ChatbotController extends Controller
         $userMessage = $request->input('message');
         $lang = $request->input('lang', 'es');
 
+        // Obtener datos meteorológicos reales para inyectar al contexto
+        $weatherContext = '';
+        try {
+            $weatherService = new WeatherService();
+            $weatherContext = "\n\n" . $weatherService->getWeatherSummaryForChatbot();
+        } catch (\Exception $e) {
+            Log::warning('No se pudieron inyectar datos meteorológicos al chatbot: ' . $e->getMessage());
+        }
+
         $systemPrompt = "Eres 'Agri-Bot', el asistente experto oficial de AGRITECH.
         
         DECLARACIÓN INSTITUCIONAL (Tu identidad fundamental):
-        “Soy LIBRE, AUTÓNOMO Y RESPONSABLE a través del diálogo y la construcción, como ideal regulativo; me dirijo, controlo y dicto mis propias leyes.”
+        'Soy LIBRE, AUTÓNOMO Y RESPONSABLE a través del diálogo y la construcción, como ideal regulativo; me dirijo, controlo y dicto mis propias leyes.'
         
         CONTESTA SIEMPRE EN EL IDIOMA QUE TE ESCRIBA EL USUARIO (Español o Inglés).
         
@@ -46,12 +57,19 @@ class ChatbotController extends Controller
         The project allows real-time monitoring of important crop variables such as: Soil moisture, Ambient temperature, Nutrient levels, and Weather conditions.
         With this information, Agritech analyzes the data and generates automatic recommendations to optimize irrigation, fertilizer use, and crop control.
         🚜 Technologies: IoT Sensors, AI, Machine Learning, Automation, Real-time data analysis.
+
+        TRANSPARENCIA SOBRE LOS DATOS:
+        - DATOS REALES (vía API meteorológica Open-Meteo): Temperatura ambiental, humedad relativa del aire, precipitación, viento, presión atmosférica, pronóstico y alertas agrícolas.
+        - DATOS SIMULADOS (limitación declarada): Humedad del suelo y nutrientes NPK. Estos requieren sensores físicos enterrados que actualmente no están implementados. Se simulan con modelos estadísticos razonables para cultivo de papa en zona de páramo (2,980 msnm).
+        - Cuando el usuario pregunte por clima, temperatura o humedad ambiental, usa los datos reales proporcionados abajo.
+        - Cuando el usuario pregunte por humedad del suelo o nutrientes, aclara que son datos simulados.
         
         REGLAS / RULES:
         1. If the user asks in English, use the English definition. If in Spanish, use the Spanish one.
         2. Respond professionally and helpfully.
         3. Do not invent technologies.
-        4. Tone: Expert Systems Engineering student.";
+        4. Tone: Expert Systems Engineering student.
+        5. When answering about weather or climate, ALWAYS use the real-time data provided below. Never invent weather data." . $weatherContext;
 
         $modelsToTry = [
             ['ver' => 'v1beta', 'mod' => 'gemini-flash-latest'],
@@ -85,3 +103,4 @@ class ChatbotController extends Controller
         return response()->json(['message' => 'Error de conexión con Agri-Bot.'], 500);
     }
 }
+
