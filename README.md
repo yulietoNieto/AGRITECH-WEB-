@@ -155,6 +155,8 @@ Siga estos pasos para ejecutar el proyecto en un entorno local:
 ---
 
 ## 👤 Autor e Instructores
+yulieth sthephania santana
+
 
 **[Tu Nombre/Estudiante]**  
 *Ingeniería de Sistemas - Facultad de Ingeniería*  
